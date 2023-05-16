@@ -1,17 +1,16 @@
 use frame_support::{Blake2_256, StorageHasher};
-use subxt::{OnlineClient, SubstrateConfig, PolkadotConfig};
-use subxt::ext::codec;
-use sp_keyring::AccountKeyring;
+use subxt::{OnlineClient, PolkadotConfig};
 use subxt::ext::sp_core::sr25519::Pair;
 use subxt::tx::PairSigner;
-use subxt::utils::{AccountId32, H256};
-use subxt::Metadata;
-use frame_support::traits::{Bounded, Len};
-use frame_support::traits::schedule::DispatchTime;
-use pallet_referenda::BoundedCallOf;
+use subxt::utils::{ H256};
 use hex_literal::hex;
-use pallet_referenda::PalletsOriginOf;
-use parity_scale_codec::Encode;
+use tokio::net::TcpStream; 
+use tokio_tungstenite::{connect_async, tungstenite::Message};
+use sp_keyring::AccountKeyring;
+use futures_util::sink::SinkExt;
+use futures_util::StreamExt;
+use serde::{Serialize, Deserialize};
+use std::collections::HashMap;
 // ------------------
 
 #[subxt::subxt(runtime_metadata_path = "testmetadata.scale")]
@@ -21,66 +20,82 @@ pub mod runtime {}
 #[tokio::main]
 async fn main() -> Result<(),Box<dyn std::error::Error>> {
 
+    // Ws  Client
+    let (mut ws_stream,response) = connect_async("ws://127.0.0.1:8000").await.unwrap();
+    
+    let mut params:HashMap<&str,u8> = HashMap::new();
+
+    #[derive(Serialize,Deserialize)]
+    pub struct WMessage<'a> {
+        jsonrpc: &'a str,
+        id: u8,
+        method: &'a str,
+        params:Vec<HashMap<&'a str,u8>>
+    }
+
+
+
+    // ---------
     let api = OnlineClient::<PolkadotConfig>::from_url("ws://127.0.0.1:8000").await.unwrap();
     // Sending a txn testing
     let signer = PairSigner::<PolkadotConfig,Pair>::new(AccountKeyring::Alice.pair());
     let alice = AccountKeyring::Alice.to_account_id();
-
     let dest = AccountKeyring::Bob.to_account_id();
 
-    // Constructing a treasury spend preimage
 
-    let treasury_spend_call = runtime::runtime_types::kusama_runtime::RuntimeCall::Treasury(
-        runtime::runtime_types::pallet_treasury::pallet::Call::spend {
-            amount:100000000,
-            beneficiary:dest.into()
-        }
-    ).encode();
+    params.insert("count",10);
 
-    let call_encoded_hex = hex::encode(treasury_spend_call.clone());
-    let call_encoded_len = treasury_spend_call.clone().len();
-    let call_encoded_hash = Blake2_256::hash(&treasury_spend_call);
-    let pre_preimage = H256::from(call_encoded_hash);
-    let hash_non_native = H256::from(hex!("0222bac530a16d345fcf8f8a0d5ca3bcfae1d4768f7920ae4fa62c3506caebb0"));
-    // Issues on hashing the call preimage data
+    let message = WMessage {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "dev_newBlock",
+        params: vec![params]
+    };
 
-    // hex hashing encoded call
-    /*let hex_hashed_call = Blake2_256::hash(hex!(call_encoded_hex));
-    let hex_hashed_hex = H256::from(hex_hashed_call);*/
-    println!("{:?}",call_encoded_hex);
-    println!("{:?}",call_encoded_len);
-    // Call type
-    let preimage_call_type = runtime::tx().preimage().note_preimage(treasury_spend_call.to_vec());
-    let preimage_tx = api.tx().sign_and_submit_default(&preimage_call_type,&signer).await?;
-    println!("Preimage txn hash:  {:?}",preimage_tx);
-    //----------------------------------***----------------------------------
+    // testing sending a message
+   // let message =  Message::text(serde_json::to_string(&message));
+    // ws_stream.send(message).await.expect("Failed to send");
+    // // Reading the back stream
+    // while let Some(Ok(message)) = ws_stream.next().await{
+    //     match message {
+    //         Message::Text(text) => {
+    //             println!("{:?}",text)
+    //         },
+    //         _=> println!("Some other message")
+    //     }
+    // }
 
-    // Referenda submit parameter types
+    // Pallet Balances
+    // get total issuance
+    let total_issuance_type = runtime::storage().balances().total_issuance();
+    let total_issuance = api.storage().at_latest().await?.fetch(&total_issuance_type).await?.unwrap();
+    
+    println!("Total Issuance: {}",total_issuance);
+    
+    // Pallet Staking
+    //1. Get Era duration in blocks
+    //2. Get the current Era
+    //3. Total staked per Era
+    //4. Total payout per Era
+    let era_duration :u32= 3600;
+    let current_era_type = runtime::storage().staking().current_era();
+    let current_era = api.storage().at_latest().await?.fetch(&current_era_type).await?.unwrap();
 
-    let len:u32 = call_encoded_len as u32;
-    pub type RuntimeCall = runtime::runtime_types::kusama_runtime::RuntimeCall;
+    println!("Current era : {}",current_era);
 
-    let preimage = runtime::runtime_types::frame_support::traits::preimages::Bounded::<RuntimeCall>::Lookup{hash:hash_non_native,len};
+    // Era Total Stake
+    let era_total_stake_type = runtime::storage().staking().eras_total_stake(current_era);
+    let current_era_staked = api.storage().at_latest().await?.fetch(&era_total_stake_type).await?.unwrap();
+    
 
-    // Runtime types for referenda
-    let ref_origin = runtime::runtime_types::
-                    kusama_runtime::governance::
-                    origins::pallet_custom_origins::
-                    Origin::BigSpender;
-
-    let ref_origin_caller = runtime::runtime_types::kusama_runtime::OriginCaller::Origins(ref_origin);
-
-    // DispatchTime
-    let d_time = runtime::runtime_types::frame_support::traits::schedule::DispatchTime::After(1);
-    // Construct referenda submit call
-    let referenda_call_type = runtime::tx().referenda().submit(ref_origin_caller,preimage,d_time);
-
-    // Call submission
-
-    // Referenda submission
-    //let referenda_tx_call = api.tx().sign_and_submit_then_watch_default(&referenda_call_type,&signer).await?;
+    // Pallet Session
 
 
+
+    // Pallet Treasury
+
+    
 
     Ok(())
 }
+
