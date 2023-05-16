@@ -429,9 +429,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.2.4"
+version = "4.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "956ac1f6381d8d82ab4684768f89c0ea3afe66925ceadb4eeb3fc452ffc55d62"
+checksum = "3d70680e56dc65cb226c361aaa4e4a16d1f7e082bfed9ffceaee39c2012384ec"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -440,9 +440,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.2.4"
+version = "4.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84080e799e54cff944f4b4a4b0e71630b0e0443b25b985175c7dddc1a859b749"
+checksum = "3fad499d5e07338414687350c5fdb82b1ab0001e9b26aa6275deccb684b14164"
 dependencies = [
  "anstream",
  "anstyle",
@@ -729,6 +729,12 @@ dependencies = [
  "quote",
  "syn 1.0.109",
 ]
+
+[[package]]
+name = "data-encoding"
+version = "2.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23d8666cb01533c39dde32bcbab8e227b4ed6679b2c925eba05feabea39508fb"
 
 [[package]]
 name = "der"
@@ -1781,12 +1787,16 @@ dependencies = [
 name = "kusama-chop"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "frame-metadata",
  "frame-support",
+ "futures-util",
  "hex",
  "hex-literal",
  "pallet-referenda",
  "parity-scale-codec",
+ "serde",
+ "serde_json",
  "sp-io",
  "sp-keyring",
  "subxt",
@@ -1794,6 +1804,8 @@ dependencies = [
  "subxt-codegen",
  "syn 2.0.15",
  "tokio",
+ "tokio-tungstenite",
+ "tungstenite",
 ]
 
 [[package]]
@@ -2901,18 +2913,18 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.160"
+version = "1.0.163"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb2f3770c8bce3bcda7e149193a069a0f4365bda1fa5cd88e03bca26afc1216c"
+checksum = "2113ab51b87a539ae008b5c6c02dc020ffa39afd2d83cffcb3f4eb2722cebec2"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.160"
+version = "1.0.163"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "291a097c63d8497e00160b166a967a4a79c64f3facdd01cbd7502231688d77df"
+checksum = "8c805777e3930c8883389c602315a24224bcc738b63905ef87cd1420353ea93e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2941,6 +2953,17 @@ dependencies = [
  "cpufeatures",
  "digest 0.9.0",
  "opaque-debug 0.3.0",
+]
+
+[[package]]
+name = "sha1"
+version = "0.10.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f04293dc80c3993519f2d7f6f511707ee7094fe0c6d3406feb330cdb3540eba3"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest 0.10.6",
 ]
 
 [[package]]
@@ -3861,6 +3884,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-tungstenite"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec509ac96e9a0c43427c74f003127d953a265737636129424288d27cb5c4b12c"
+dependencies = [
+ "futures-util",
+ "log",
+ "tokio",
+ "tungstenite",
+]
+
+[[package]]
 name = "tokio-util"
 version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4030,6 +4065,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4f195fd851901624eee5a58c4bb2b4f06399148fcd0ed336e6f1cb60a9881df"
 
 [[package]]
+name = "tungstenite"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "15fba1a6d6bb030745759a9a2a588bfe8490fc8b4751a277db3a0be1c9ebbf67"
+dependencies = [
+ "byteorder",
+ "bytes",
+ "data-encoding",
+ "http",
+ "httparse",
+ "log",
+ "rand 0.8.5",
+ "sha1",
+ "thiserror",
+ "url",
+ "utf-8",
+]
+
+[[package]]
 name = "twox-hash"
 version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4108,6 +4162,12 @@ dependencies = [
  "idna",
  "percent-encoding",
 ]
+
+[[package]]
+name = "utf-8"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
 
 [[package]]
 name = "utf8parse"
